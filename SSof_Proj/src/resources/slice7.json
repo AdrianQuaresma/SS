@@ -30,18 +30,28 @@
       "operator": "=",
       "left": {
         "kind": "variable",
-        "name": "query",
+        "name": "query1",
+        "byref": false,
+        "curly": false
+      },
+      "right": {
+        "kind": "string",
+        "value": "SELECT *FROM siswa WHERE nis='",
+        "isDoubleQuote": true
+      }
+    },
+    {
+      "kind": "assign",
+      "operator": "=",
+      "left": {
+        "kind": "variable",
+        "name": "query2",
         "byref": false,
         "curly": false
       },
       "right": {
         "kind": "encapsed",
         "value": [
-          {
-            "kind": "string",
-            "value": "SELECT *FROM siswa WHERE nis='",
-            "isDoubleQuote": false
-          },
           {
             "kind": "variable",
             "name": "nis",
@@ -55,6 +65,32 @@
           }
         ],
         "type": "string"
+      }
+    },
+    {
+      "kind": "assign",
+      "operator": "=",
+      "left": {
+        "kind": "variable",
+        "name": "query",
+        "byref": false,
+        "curly": false
+      },
+      "right": {
+        "kind": "bin",
+        "type": ".",
+        "left": {
+          "kind": "variable",
+          "name": "query1",
+          "byref": false,
+          "curly": false
+        },
+        "right": {
+          "kind": "variable",
+          "name": "query",
+          "byref": false,
+          "curly": false
+        }
       }
     },
     {

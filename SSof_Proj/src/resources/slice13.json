@@ -6,7 +6,7 @@
       "operator": "=",
       "left": {
         "kind": "variable",
-        "name": "nis",
+        "name": "u",
         "byref": false,
         "curly": false
       },
@@ -14,14 +14,48 @@
         "kind": "offsetlookup",
         "what": {
           "kind": "variable",
-          "name": "_POST",
+          "name": "_GET",
           "byref": false,
           "curly": false
         },
         "offset": {
           "kind": "string",
-          "value": "nis",
+          "value": "username",
           "isDoubleQuote": false
+        }
+      }
+    },
+    {
+      "kind": "assign",
+      "operator": "=",
+      "left": {
+        "kind": "variable",
+        "name": "q",
+        "byref": false,
+        "curly": false
+      },
+      "right": {
+        "kind": "bin",
+        "type": ".",
+        "left": {
+          "kind": "bin",
+          "type": ".",
+          "left": {
+            "kind": "string",
+            "value": "SELECT pass FROM users WHERE user='",
+            "isDoubleQuote": true
+          },
+          "right": {
+            "kind": "variable",
+            "name": "u",
+            "byref": false,
+            "curly": false
+          }
+        },
+        "right": {
+          "kind": "string",
+          "value": "'",
+          "isDoubleQuote": true
         }
       }
     },
@@ -35,38 +69,6 @@
         "curly": false
       },
       "right": {
-        "kind": "encapsed",
-        "value": [
-          {
-            "kind": "string",
-            "value": "SELECT *FROM siswa WHERE nis='",
-            "isDoubleQuote": false
-          },
-          {
-            "kind": "variable",
-            "name": "nis",
-            "byref": false,
-            "curly": false
-          },
-          {
-            "kind": "string",
-            "value": "'",
-            "isDoubleQuote": false
-          }
-        ],
-        "type": "string"
-      }
-    },
-    {
-      "kind": "assign",
-      "operator": "=",
-      "left": {
-        "kind": "variable",
-        "name": "q",
-        "byref": false,
-        "curly": false
-      },
-      "right": {
         "kind": "call",
         "what": {
           "kind": "identifier",
@@ -76,13 +78,7 @@
         "arguments": [
           {
             "kind": "variable",
-            "name": "query",
-            "byref": false,
-            "curly": false
-          },
-          {
-            "kind": "variable",
-            "name": "koneksi",
+            "name": "q",
             "byref": false,
             "curly": false
           }
