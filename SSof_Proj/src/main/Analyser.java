@@ -35,12 +35,15 @@ public class Analyser{
 			e.printStackTrace();
 		}
 		
-		//load patterns
+		//TODO load patterns
 		
 		//parse slice
 		//load threats
 		jsonObject =  (JSONObject) obj;
 		checkEntryPoints(filename, jsonObject);
+		
+		
+		//TODO check if variable is assigned to another variable, if it is, replace names? (u->q)?
 		
 		//list threats
 		System.out.println("The following variables were identified as threats");
@@ -48,15 +51,13 @@ public class Analyser{
 			
 			System.out.println(t.getName());
 			
-			//mark variable as sanitized or not
+			//TODO mark variable as sanitized or not
 		}
 		
 		
-		
-		
-		//check if variable is assigned to another variable, if it is replace names (u->q)?
-		
-		//check if variable is used in sink
+		//TODO check if variable is used in sink
+			//if it is, check if it's sanitized
+				//if not, print vulnerability
 		
 		System.out.println("Analysis done");
 	}
