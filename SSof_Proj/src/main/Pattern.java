@@ -8,6 +8,10 @@ public class Pattern {
 	private ArrayList<String> _sinks;
 	
 	
+	public Pattern(){
+		
+	}
+	
 	public Pattern(String name, ArrayList<String> entrypoints, 
 			ArrayList<String> validations,ArrayList<String> sinks){
 		

@@ -37,6 +37,10 @@ public class Analyser{
 		
 		//TODO load patterns
 		
+		patterns = new ArrayList<Pattern>();
+		PatternLoader loader = new PatternLoader();
+		loader.loadPatterns();
+		
 		//parse slice
 		//load threats
 		jsonObject =  (JSONObject) obj;
