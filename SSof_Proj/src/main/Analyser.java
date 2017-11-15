@@ -9,7 +9,7 @@ import org.json.simple.parser.JSONParser;
 
 public class Analyser{
 	
-	private static ArrayList<Pattern> patterns;
+	private static ArrayList<Pattern> patterns = new ArrayList<Pattern>();
 	private static ArrayList<Threat> threats = new ArrayList<Threat>();
 	
 	public static void main(String args[]){
@@ -35,11 +35,9 @@ public class Analyser{
 			e.printStackTrace();
 		}
 		
-		//TODO load patterns
-		
-		patterns = new ArrayList<Pattern>();
+		//load patterns
 		PatternLoader loader = new PatternLoader();
-		loader.loadPatterns();
+		patterns = loader.loadPatterns();
 		
 		//parse slice
 		//load threats
@@ -47,7 +45,7 @@ public class Analyser{
 		checkEntryPoints(filename, jsonObject);
 		
 		
-		//TODO check if variable is assigned to another variable, if it is, replace names? (u->q)?
+		
 		
 		//list threats
 		System.out.println("The following variables were identified as threats");
@@ -58,6 +56,7 @@ public class Analyser{
 			//TODO mark variable as sanitized or not
 		}
 		
+		//TODO check if variable is assigned to another variable, if it is, replace names? (u->q)?
 		
 		//TODO check if variable is used in sink
 			//if it is, check if it's sanitized
@@ -88,18 +87,19 @@ public class Analyser{
             		if((jsobj2).containsKey("name")){
             			
             			//check for entry points - assignments with entry points from patterns 
-            			if(jsobj2.get("name").equals("_GET") || jsobj2.get("name").equals("_POST")){			
-            				//check left for variable name
-            				jsobj = (JSONObject) jsonObject.get("left");
-            				Threat t = new Threat((String) jsobj.get("name"), false, false);
-            				threats.add(t);
+            			for(Pattern p : patterns){
             				
+            				if(p.getEntrypoints().contains(jsobj2.get("name"))){
+	            				//check left for variable name
+	            				jsobj = (JSONObject) jsonObject.get("left");
+	            				Threat t = new Threat((String) jsobj.get("name"), false, false);
+	            				threats.add(t);
+	            				break;
+            				}
             			}
             		}
         		}
-                
         	}       	
-           // System.out.println(jsonObject);
         }		
 	}
 	

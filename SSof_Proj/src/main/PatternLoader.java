@@ -8,7 +8,7 @@ public class PatternLoader {
 
 	public ArrayList<Pattern> loadPatterns(){
 		
-		Pattern p = new Pattern();
+		Pattern p = null;
 		ArrayList<Pattern> patterns = new ArrayList<Pattern>();
 		
 		String patName="";
@@ -20,23 +20,18 @@ public class PatternLoader {
 			File file = new File("src/resources/patterns.txt");
 			FileReader fileReader = new FileReader(file);
 			BufferedReader bufferedReader = new BufferedReader(fileReader);
-			StringBuffer stringBuffer = new StringBuffer();
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				
+			String line = bufferedReader.readLine();
+			while ((line = bufferedReader.readLine()) != null) {			
 				if(!line.equals(";")){
 					patName=line;
 					line = bufferedReader.readLine();
-					System.out.println(line);
 					entries=parseEntryPoints(line);
 					line = bufferedReader.readLine();
-					System.out.println(line);
 					san=parseSanitizers(line);
 					line = bufferedReader.readLine();
 					sinks=parseSinks(line);
-					System.out.println(line);
-					
-					
+					p = new Pattern(patName, entries, san, sinks);
+					patterns.add(p);			
 				}
 			}
 			fileReader.close();
@@ -44,7 +39,7 @@ public class PatternLoader {
 			e.printStackTrace();
 		}
 		
-		return null;
+		return patterns;
 		
 	}
 	
@@ -54,7 +49,11 @@ public class PatternLoader {
 		String buffer[] = line.split(",");
 		
 		for(int i=0; i<buffer.length; i++){
-			entries.add(buffer[i]);
+			if(buffer[i].substring(0, 1).equals("$")){
+				entries.add(buffer[i].substring(1));
+			}else{
+				entries.add(buffer[i]);
+			}
 		}
 		
 		return entries;
