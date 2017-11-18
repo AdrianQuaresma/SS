@@ -26,6 +26,10 @@ public class Threat {
 		this._sink = true;
 	}
 	
+	public boolean isSanitized(){
+		return _sanitized;
+	}
+	
 	public boolean isThreat(){
 		return _sink && !_sanitized;
 	}

@@ -56,6 +56,7 @@ public class Analyser{
 			
 			
 		}
+
 		//TODO mark variable as sanitized or not
 		
 		//TODO check if variable is assigned to another variable, if it is, replace names? (u->q)?
@@ -78,26 +79,48 @@ public class Analyser{
         	jsonObject = iterator.next();
         	name = (String) jsonObject.get("kind");
         	JSONObject jsobj, jsobj2;
-        	//check if the threat t was assigned to any other variable
+        	
+        	//check if the threat t was assigned to any other variable, assign can also be a sanitization
         	if(name.equals("assign")){
+        		
         		jsobj = (JSONObject) jsonObject.get("left");
         		if(jsobj.get("name").equals(t.getName())){
         			continue;
         		}
         		
-        		jsobj = (JSONObject) jsonObject.get("right");
+        		jsobj = (JSONObject) jsonObject.get("right");       		
         		
         		kind = (String) jsobj.get("kind");
+		        //sanitize !dont change kind value
+	        	if(kind.equals("call")){
+        			
+        		}
+        		
         		if(kind.equals("encapsed")){
-        			JSONArray values = (JSONArray) jsonObject.get("value");
+        			JSONArray values = (JSONArray) jsobj.get("value");
         			Iterator<JSONObject> iterator2 = values.iterator();
         			while(iterator2.hasNext()){
-        				jsobj2=iterator2.next();
+        				
+        				jsobj2=iterator2.next();			
+        				if(jsobj2.containsKey("kind") && jsobj2.containsKey("name")){
+	        				String kindtmp, nametmp;	
+	        				kindtmp = (String) jsobj2.get("kind");
+	        				nametmp = (String) jsobj2.get("name");
+	        				if(kindtmp.equals("variable") && nametmp.equals(t.getName())){
+	        					//get left side
+	        					jsobj2 = (JSONObject) jsonObject.get("left");				
+	        					Threat tmp = new Threat((String)jsobj2.get("name"), t.isSanitized(), false);
+	        					//threats.add(tmp);
+	        					System.out.println("it gets here");
+	        				}
+        				}
+        				        					
+        				
         			}
         		}
         		
         		
-        		jsobj2 = (JSONObject) jsobj.get("kind");
+        		//jsobj2 = (JSONObject) jsobj.get("kind");
         		
         		
         		
