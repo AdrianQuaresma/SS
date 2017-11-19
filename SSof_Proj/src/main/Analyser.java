@@ -10,6 +10,7 @@ import org.json.simple.parser.JSONParser;
 public class Analyser{
 	
 	private static ArrayList<Pattern> patterns = new ArrayList<Pattern>();
+	private static ArrayList<Threat> entrypoints = new ArrayList<Threat>();
 	private static ArrayList<Threat> threats = new ArrayList<Threat>();
 	
 	public static void main(String args[]){
@@ -44,22 +45,22 @@ public class Analyser{
 		jsonObject =  (JSONObject) obj;
 		checkEntryPoints(filename, jsonObject);
 		
+		//parse threats and slice
+		for(Threat t: entrypoints){
+			System.out.println(t.getName());
+			checkVulnerability(t,filename, jsonObject);
+			checkSink(t, filename, jsonObject);
+			
+		}
 		
+		System.out.println(threats.size());
 		
-		
-		//list threats
-		//parse threats
-		System.out.println("The following variables were identified as threats");
 		for(Threat t: threats){
 			System.out.println(t.getName());
 			checkVulnerability(t,filename, jsonObject);
 			checkSink(t, filename, jsonObject);
 			
 		}
-
-		//TODO mark variable as sanitized or not
-		
-		//TODO check if variable is assigned to another variable, if it is, replace names? (u->q)?
 		
 		//TODO check if variable is used in sink
 			//if it is, check if it's sanitized
@@ -122,22 +123,15 @@ public class Analyser{
 	        					//get left side
 	        					jsobj2 = (JSONObject) jsonObject.get("left");				
 	        					Threat tmp = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
-	        					//threats.add(tmp);
+	        					threats.add(tmp);
 	        					System.out.println("it gets here");
 	        				}
         				}				
         			}
         		}
-        		
-        		
-        		//jsobj2 = (JSONObject) jsobj.get("kind");
-        		
-        		
-        		
+        		    		
         	}
         	
-        	
-        	//check if the threat t is being used on a sensitive sink
         }
 	}
 
@@ -170,7 +164,7 @@ public class Analyser{
 	            				//check left for variable name
 	            				jsobj = (JSONObject) jsonObject.get("left");
 	            				Threat t = new Threat((String) jsobj.get("name"), p.getName() ,false, false);
-	            				threats.add(t);
+	            				entrypoints.add(t);
 	            				break;
             				}
             			}
@@ -208,7 +202,14 @@ public class Analyser{
 									String nameArg = (String) arg.get("name");
 									
 									if(nameArg.equals(t.getName())){
-										System.out.println("Threat is sink");
+										
+										if(!t.isSanitized()){
+											System.out.println("This slice is vulnerable to: " + t.getType());
+										}else{
+											System.out.println("This slice is not vulnerable");
+											System.out.println("The following fucntion sanitizes data" + t.getSanitizer());
+										}
+										
 									}
 								}
 							}
