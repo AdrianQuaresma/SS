@@ -16,7 +16,6 @@ public class Analyser{
 	public static void main(String args[]){
 		
 		String filename=null;
-		System.out.println(args.length);
 		if(args.length<1){
 			System.out.println("Please specify a file");
 			System.exit(1);
@@ -45,11 +44,12 @@ public class Analyser{
 		jsonObject =  (JSONObject) obj;
 		checkEntryPoints(filename, jsonObject);
 		
+		threats=new ArrayList<Threat>(entrypoints);
+		
 		//parse threats and slice
 		for(Threat t: entrypoints){
 			System.out.println(t.getName());
-			checkVulnerability(t,filename, jsonObject);
-			checkSink(t, filename, jsonObject);
+			checkAssignment(t,filename, jsonObject);
 			
 		}
 		
@@ -70,6 +70,73 @@ public class Analyser{
 	}
 
 	private static void checkVulnerability(Threat t,String filename, JSONObject jsonObject) {
+		String name, kind, kindtmp, nametmp; 
+        JSONArray children = (JSONArray) jsonObject.get("children");
+        
+        Iterator<JSONObject> iterator = children.iterator();
+        while (iterator.hasNext()) {
+        	
+        	jsonObject = iterator.next();
+        	name = (String) jsonObject.get("kind");
+        	JSONObject jsobj, jsobj2;
+        	
+        	//check if the threat t was assigned to any other variable, assign can also be a sanitization
+        	if(name.equals("assign")){
+        		
+        		jsobj = (JSONObject) jsonObject.get("left");
+        		if(jsobj.get("name").equals(t.getName())){
+        			continue;
+        		}
+        		
+        		jsobj = (JSONObject) jsonObject.get("right");       		
+        		kind = (String) jsobj.get("kind");
+        		
+        		//check if the threat t is sanitized 
+	        	if(kind.equals("call")){
+	        		
+	        		if(jsobj.containsKey("what") ){
+	        			jsobj2 = (JSONObject) jsobj.get("what");
+	        			
+	        			for(Pattern p : patterns){
+	        				if(p.getValidations().contains(jsobj2.get("name"))){
+	        					t.setSanitizer((String)jsobj2.get("name"));
+	        					t.setSanitized();
+	        					System.out.println("1");
+	        					break;
+	        				}
+	        			}
+	        			
+	        		}
+        		}
+	        	        	
+        		//assignment to another variable
+//        		if(kind.equals("encapsed")){
+//        			JSONArray values = (JSONArray) jsobj.get("value");
+//        			Iterator<JSONObject> iterator2 = values.iterator();
+//        			while(iterator2.hasNext()){
+//        				
+//        				jsobj2=iterator2.next();	
+//        				
+//        				if(jsobj2.containsKey("kind") && jsobj2.containsKey("name")){	
+//	        				kindtmp = (String) jsobj2.get("kind");
+//	        				nametmp = (String) jsobj2.get("name");
+//	        				if(kindtmp.equals("variable") && nametmp.equals(t.getName())){
+//	        					//get left side
+//	        					jsobj2 = (JSONObject) jsonObject.get("left");				
+//	        					Threat tmp = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
+//	        					threats.add(tmp);
+//	        					System.out.println("it gets here");
+//	        				}
+//        				}				
+//        			}
+//        		}
+        		    		
+        	}
+        	
+        }
+	}
+
+	private static void checkAssignment(Threat t,String filename, JSONObject jsonObject) {
 		String name, kind, kindtmp, nametmp; 
         JSONArray children = (JSONArray) jsonObject.get("children");
         
@@ -124,7 +191,6 @@ public class Analyser{
 	        					jsobj2 = (JSONObject) jsonObject.get("left");				
 	        					Threat tmp = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
 	        					threats.add(tmp);
-	        					System.out.println("it gets here");
 	        				}
         				}				
         			}
@@ -134,7 +200,8 @@ public class Analyser{
         	
         }
 	}
-
+	
+	
 	private static void checkEntryPoints(String filename, JSONObject jsonObject) {
             
         String name;
@@ -184,12 +251,12 @@ public class Analyser{
 			String name = (String) jsonObject.get("kind");
 			
 			if(name.equals("assign")){
+				
 				//check right for call functions
 				JSONObject jsobj = (JSONObject) jsonObject.get("right");
 				name = (String) jsobj.get("kind");
 				if(name.equals("call")){
 					JSONObject jsobj2 = (JSONObject) jsobj.get("what");
-					
 					if((jsobj2).containsKey("name")){
 						//check if threat is in list of sinks of patterns
 						for(Pattern p : patterns){
