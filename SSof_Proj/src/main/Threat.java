@@ -1,13 +1,24 @@
 public class Threat {
 	
 	private String _name;
+	private String _type;
+	private String _sanitizer;
 	private boolean _sanitized;
 	private boolean _sink;
 	
-	public Threat(String name, boolean sanitized, boolean sink){
+	public Threat(String name, String type, boolean sanitized, boolean sink){
 		_name=name;
+		_type=type;
 		_sanitized=sanitized;
 		_sink=sink;
+	}
+
+	public String getType() {
+		return _type;
+	}
+
+	public void setType(String type) {
+		this._type = type;
 	}
 
 	public String getName() {
@@ -32,5 +43,13 @@ public class Threat {
 	
 	public boolean isThreat(){
 		return _sink && !_sanitized;
+	}
+
+	public String getSanitizer() {
+		return _sanitizer;
+	}
+
+	public void setSanitizer(String sanitizer) {
+		this._sanitizer = sanitizer;
 	}
 }
