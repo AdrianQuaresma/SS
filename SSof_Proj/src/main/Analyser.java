@@ -53,7 +53,7 @@ public class Analyser{
 		for(Threat t: threats){
 			System.out.println(t.getName());
 			checkVulnerability(t,filename, jsonObject);
-			
+			checkSink(t, filename, jsonObject);
 			
 		}
 
@@ -180,5 +180,49 @@ public class Analyser{
         }		
 	}
 	
+	private static void checkSink(Threat t,String filename, JSONObject jsonObject){
+		JSONArray children = (JSONArray) jsonObject.get("children");
+		
+		Iterator<JSONObject> iterator = children.iterator();
+		
+		while(iterator.hasNext()){
+			jsonObject = iterator.next();
+			String name = (String) jsonObject.get("kind");
+			
+			if(name.equals("assign")){
+				//check right for call functions
+				JSONObject jsobj = (JSONObject) jsonObject.get("right");
+				name = (String) jsobj.get("kind");
+				if(name.equals("call")){
+					JSONObject jsobj2 = (JSONObject) jsobj.get("what");
+					
+					if((jsobj2).containsKey("name")){
+						//check if threat is in list of sinks of patterns
+						for(Pattern p : patterns){
+							
+							if(p.getSinks().contains(jsobj2.get("name"))){
+								// check if threat is an argument of sink
+								JSONArray arguments = (JSONArray) jsobj.get("arguments");
+								for(Object o : arguments){
+									JSONObject arg = (JSONObject) o;
+									String nameArg = (String) arg.get("name");
+									
+									if(nameArg.equals(t.getName())){
+										System.out.println("Threat is sink");
+									}
+								}
+							}
+						}
+					}
+					
+					
+				}
+				
+			}
+			
+			
+		}
+		
+	}
 	
 }
