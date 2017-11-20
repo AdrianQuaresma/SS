@@ -41,7 +41,7 @@ public class Analyser{
 		
 		//parse slice for entry points
 		jsonObject =  (JSONObject) obj;
-		checkEntryPoints(filename, jsonObject);
+		checkEntryPoints(jsonObject);
 		
 		threats=new ArrayList<Threat>();
 		
@@ -51,23 +51,22 @@ public class Analyser{
 		System.out.println("Entrypoints: ");
 		int i=1;
 		//parse threats for new assignments
-		for(Threat t: entrypoints){
-			System.out.println(i + " - " + t.getName());
-			array_aux = checkAssignment(t,filename, jsonObject);
+		for(Threat t: entrypoints){	
+			array_aux = checkAssignment(t, jsonObject);
 			threats.addAll(array_aux);
+			System.out.println(i + " - " + t.getName());
 			i++;
 		}
-		
 		//parse threats for vulnerabilities
 		for(Threat t: threats){
-			checkVulnerability(t,filename, jsonObject);
-			checkSink(t, filename, jsonObject);
+			checkVulnerability(t, jsonObject);
+			checkSink(t, jsonObject);
 			
 		}
 		System.out.println("Analysis done");
 	}
 	
-	private static void checkEntryPoints(String filename, JSONObject jsonObject) {
+	private static void checkEntryPoints(JSONObject jsonObject) {
         
         String kind;
         
@@ -127,19 +126,19 @@ public class Analyser{
         }		
 	}
 
-	private static void checkVulnerability(Threat t,String filename, JSONObject jsonObject) {
-		String name, kind; 
+	private static void checkVulnerability(Threat t, JSONObject jsonObject) {
+		String kind; 
         JSONArray children = (JSONArray) jsonObject.get("children");
         
         Iterator<JSONObject> iterator = children.iterator();
         while (iterator.hasNext()) {
         	
         	jsonObject = iterator.next();
-        	name = (String) jsonObject.get("kind");
+        	kind = (String) jsonObject.get("kind");
         	JSONObject jsobj, jsobj2;
         	
         	//check if the threat t was assigned to any other variable to be sanitized
-        	if(name.equals("assign")){
+        	if(kind.equals("assign")){
         		
         		jsobj = (JSONObject) jsonObject.get("left");
         		if(jsobj.get("name").equals(t.getName())){
@@ -169,7 +168,7 @@ public class Analyser{
         }
 	}
 
-	private static ArrayList<Threat> checkAssignment(Threat t,String filename, JSONObject jsonObject) {
+	private static ArrayList<Threat> checkAssignment(Threat t, JSONObject jsonObject) {
 		
 		ArrayList<Threat> threatstmp = new ArrayList<Threat>(entrypoints);
 		
@@ -180,11 +179,11 @@ public class Analyser{
         while (iterator.hasNext()) {
         	
         	jsonObject = iterator.next();
-        	name = (String) jsonObject.get("kind");
+        	kind= (String) jsonObject.get("kind");
         	JSONObject jsobj, jsobj2;
         	
         	//check if the threat t was assigned to any other variable, assign can also be a sanitization
-        	if(name.equals("assign")){
+        	if(kind.equals("assign")){
         		
         		jsobj = (JSONObject) jsonObject.get("left");
         		name = (String)jsobj.get("name");
@@ -194,7 +193,6 @@ public class Analyser{
         		
         		jsobj = (JSONObject) jsonObject.get("right");       		
         		kind = (String) jsobj.get("kind");
-        		
         		//check if the threat t is sanitized before it's assigned to another variable
 	        	if(kind.equals("call")){
 	        		
@@ -249,12 +247,13 @@ public class Analyser{
 	        				nametmp = (String) jsobj2.get("name");
 	        				
         					Threat tmp = new Threat(nametmp, t.getType(),t.isSanitized(), false);
-
-	        				
+			
 	        				if(kindtmp.equals("variable") && threatstmp.contains(tmp)){
 	        					//get left side
+	        					
 	        					jsobj2 = (JSONObject) jsonObject.get("left");				
 	        					Threat tmp1 = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
+	        					
 	        					if(!threatstmp.contains(tmp1)){
 	        						threatstmp.add(tmp1);
 	        					}
@@ -262,8 +261,23 @@ public class Analyser{
 	        				}
         				}				
         			}
-        		}
+        		}	
         		    		
+        	}
+        	if(kind.equals("while")){
+        		jsobj = (JSONObject) jsonObject.get("body");
+        		threatstmp=checkAssignment(t,jsobj);
+    		}
+        	
+        	if(kind.equals("if")){
+        		jsobj = (JSONObject) jsonObject.get("body");
+        		threatstmp=checkAssignment(t,jsobj);
+        		ArrayList<Threat> threatstmp2 = new ArrayList<Threat>();
+        		if(jsonObject.containsKey("alternate")){
+	        		jsobj = (JSONObject) jsonObject.get("alternate");
+	        		threatstmp2=checkAssignment(t,jsobj);
+	        		threatstmp.addAll(threatstmp2);
+        		}
         	}
         	
         }
@@ -273,7 +287,7 @@ public class Analyser{
 	
 	
 	
-	private static void checkSink(Threat t,String filename, JSONObject jsonObject){
+	private static void checkSink(Threat t, JSONObject jsonObject){
 		JSONArray children = (JSONArray) jsonObject.get("children");
 		
 		Iterator<JSONObject> iterator = children.iterator();
