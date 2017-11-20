@@ -6,7 +6,7 @@
       "operator": "=",
       "left": {
         "kind": "variable",
-        "name": "u",
+        "name": "nis",
         "byref": false,
         "curly": false
       },
@@ -14,13 +14,13 @@
         "kind": "offsetlookup",
         "what": {
           "kind": "variable",
-          "name": "_GET",
+          "name": "_POST",
           "byref": false,
           "curly": false
         },
         "offset": {
           "kind": "string",
-          "value": "username",
+          "value": "nis",
           "isDoubleQuote": false
         }
       }
@@ -30,33 +30,25 @@
       "operator": "=",
       "left": {
         "kind": "variable",
-        "name": "q",
+        "name": "escaped_item",
         "byref": false,
         "curly": false
       },
       "right": {
-        "kind": "bin",
-        "type": ".",
-        "left": {
-          "kind": "bin",
-          "type": ".",
-          "left": {
-            "kind": "string",
-            "value": "SELECT pass FROM users WHERE user='",
-            "isDoubleQuote": true
-          },
-          "right": {
+        "kind": "call",
+        "what": {
+          "kind": "identifier",
+          "resolution": "uqn",
+          "name": "mysql_escape_string"
+        },
+        "arguments": [
+          {
             "kind": "variable",
-            "name": "u",
+            "name": "nis",
             "byref": false,
             "curly": false
           }
-        },
-        "right": {
-          "kind": "string",
-          "value": "'",
-          "isDoubleQuote": true
-        }
+        ]
       }
     },
     {
@@ -65,6 +57,38 @@
       "left": {
         "kind": "variable",
         "name": "query",
+        "byref": false,
+        "curly": false
+      },
+      "right": {
+        "kind": "encapsed",
+        "value": [
+          {
+            "kind": "string",
+            "value": "SELECT *FROM siswa WHERE nis='",
+            "isDoubleQuote": false
+          },
+          {
+            "kind": "variable",
+            "name": "escaped_item",
+            "byref": false,
+            "curly": false
+          },
+          {
+            "kind": "string",
+            "value": "'",
+            "isDoubleQuote": false
+          }
+        ],
+        "type": "string"
+      }
+    },
+    {
+      "kind": "assign",
+      "operator": "=",
+      "left": {
+        "kind": "variable",
+        "name": "q",
         "byref": false,
         "curly": false
       },
@@ -78,7 +102,13 @@
         "arguments": [
           {
             "kind": "variable",
-            "name": "q",
+            "name": "query",
+            "byref": false,
+            "curly": false
+          },
+          {
+            "kind": "variable",
+            "name": "koneksi",
             "byref": false,
             "curly": false
           }
