@@ -39,8 +39,7 @@ public class Analyser{
 		PatternLoader loader = new PatternLoader();
 		patterns = loader.loadPatterns();
 		
-		//parse slice
-		//load threats
+		//parse slice for entry points
 		jsonObject =  (JSONObject) obj;
 		checkEntryPoints(filename, jsonObject);
 		
@@ -48,9 +47,10 @@ public class Analyser{
 		
 		ArrayList<Threat> array_aux = new ArrayList<Threat>();		
 
-		//parse threats and slice
+		
 		System.out.println("Entrypoints: ");
 		int i=1;
+		//parse threats for new assignments
 		for(Threat t: entrypoints){
 			System.out.println(i + " - " + t.getName());
 			array_aux = checkAssignment(t,filename, jsonObject);
@@ -58,6 +58,7 @@ public class Analyser{
 			i++;
 		}
 		
+		//parse threats for vulnerabilities
 		for(Threat t: threats){
 			checkVulnerability(t,filename, jsonObject);
 			checkSink(t, filename, jsonObject);
@@ -163,10 +164,8 @@ public class Analyser{
 	        			}
 	        			
 	        		}
-        		}
-        		    		
+        		}	    		
         	}
-        	
         }
 	}
 
