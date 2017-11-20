@@ -49,11 +49,13 @@ public class Analyser{
 		ArrayList<Threat> array_aux = new ArrayList<Threat>();		
 
 		//parse threats and slice
-		System.out.println("The following variables are entrypoints: ");
+		System.out.println("Entrypoints: ");
+		int i=1;
 		for(Threat t: entrypoints){
-			System.out.println("Var - " + t.getName());
+			System.out.println(i + " - " + t.getName());
 			array_aux = checkAssignment(t,filename, jsonObject);
 			threats.addAll(array_aux);
+			i++;
 		}
 		
 		for(Threat t: threats){
@@ -62,6 +64,66 @@ public class Analyser{
 			
 		}
 		System.out.println("Analysis done");
+	}
+	
+	private static void checkEntryPoints(String filename, JSONObject jsonObject) {
+        
+        String kind;
+        
+        JSONArray children = (JSONArray) jsonObject.get("children");
+        
+        Iterator<JSONObject> iterator = children.iterator();
+        while (iterator.hasNext()) {
+        	
+        	jsonObject = iterator.next();
+        	kind = (String) jsonObject.get("kind");
+        	
+        	if(kind.equals("assign")){
+        		//check right for entry points
+        		JSONObject jsobj = (JSONObject) jsonObject.get("right");
+        		kind = (String) jsobj.get("kind");
+        		if(kind.equals("offsetlookup")){
+        			
+            		JSONObject jsobj2 = (JSONObject) jsobj.get("what");
+            		if((jsobj2).containsKey("name")){
+  
+            			//check for entry points - assignments with entry points from patterns 
+            			for(Pattern p : patterns){
+            				
+            				if(p.getEntrypoints().contains(jsobj2.get("name"))){
+   
+	            				//check left for variable name
+	            				jsobj = (JSONObject) jsonObject.get("left");
+	            				Threat t = new Threat((String) jsobj.get("name"), p.getName() ,false, false);
+	            				entrypoints.add(t);
+	            				break;
+            				}
+            			}
+            		}
+        		}
+        	}
+        	if(kind.equals("echo")){
+        		JSONArray arguments = (JSONArray) jsonObject.get("arguments");
+                
+                Iterator<JSONObject> iterator2 = arguments.iterator();
+                while (iterator2.hasNext()) {
+                	JSONObject jsobj = iterator2.next();
+                	if(jsobj.containsKey("what")){
+                		JSONObject jsobj2 = (JSONObject) jsobj.get("what");
+                		for(Pattern p : patterns){
+            				
+            				if(p.getEntrypoints().contains(jsobj2.get("name"))){
+            					
+	                			Threat tmp2 = new Threat((String)jsobj2.get("name"), "XSS",false, false);
+	                			entrypoints.add(tmp2);
+            					System.out.println("This slice is vulnerable to: Cross-Site Scripting");
+            					break;
+            				}
+            			}
+                	}
+                }
+        	}
+        }		
 	}
 
 	private static void checkVulnerability(Threat t,String filename, JSONObject jsonObject) {
@@ -75,7 +137,7 @@ public class Analyser{
         	name = (String) jsonObject.get("kind");
         	JSONObject jsobj, jsobj2;
         	
-        	//check if the threat t was assigned to any other variable
+        	//check if the threat t was assigned to any other variable to be sanitized
         	if(name.equals("assign")){
         		
         		jsobj = (JSONObject) jsonObject.get("left");
@@ -210,44 +272,7 @@ public class Analyser{
 	}
 	
 	
-	private static void checkEntryPoints(String filename, JSONObject jsonObject) {
-            
-        String name;
-        
-        JSONArray children = (JSONArray) jsonObject.get("children");
-        
-        Iterator<JSONObject> iterator = children.iterator();
-        while (iterator.hasNext()) {
-        	
-        	jsonObject = iterator.next();
-        	name = (String) jsonObject.get("kind");
-        	
-        	if(name.equals("assign")){
-        		//check right for entry points
-        		JSONObject jsobj = (JSONObject) jsonObject.get("right");
-        		name = (String) jsobj.get("kind");
-        		if(name.equals("offsetlookup")){
-        			
-            		JSONObject jsobj2 = (JSONObject) jsobj.get("what");
-            		if((jsobj2).containsKey("name")){
-  
-            			//check for entry points - assignments with entry points from patterns 
-            			for(Pattern p : patterns){
-            				
-            				if(p.getEntrypoints().contains(jsobj2.get("name"))){
-   
-	            				//check left for variable name
-	            				jsobj = (JSONObject) jsonObject.get("left");
-	            				Threat t = new Threat((String) jsobj.get("name"), p.getName() ,false, false);
-	            				entrypoints.add(t);
-	            				break;
-            				}
-            			}
-            		}
-        		}
-        	}       	
-        }		
-	}
+	
 	
 	private static void checkSink(Threat t,String filename, JSONObject jsonObject){
 		JSONArray children = (JSONArray) jsonObject.get("children");
