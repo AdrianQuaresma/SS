@@ -52,4 +52,16 @@ public class Threat {
 	public void setSanitizer(String sanitizer) {
 		this._sanitizer = sanitizer;
 	}
+	
+	@Override
+	public boolean equals(Object o){
+		
+		if(o instanceof Threat){
+			Threat t = (Threat) o;
+			return this.getName().equals(t.getName());
+		}
+
+		return false;
+		
+	}
 }

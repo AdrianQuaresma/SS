@@ -21,7 +21,7 @@ public class Analyser{
 			System.exit(1);
 		}else{
 			filename=args[0];
-			System.out.println(filename);
+			System.out.println("File Path is: src/resources/" + filename);
 		}
 		
 		JSONObject jsonObject=null;
@@ -44,33 +44,28 @@ public class Analyser{
 		jsonObject =  (JSONObject) obj;
 		checkEntryPoints(filename, jsonObject);
 		
-		threats=new ArrayList<Threat>(entrypoints);
+		threats=new ArrayList<Threat>();
 		
+		ArrayList<Threat> array_aux = new ArrayList<Threat>();		
+
 		//parse threats and slice
+		System.out.println("The following variables are entrypoints: ");
 		for(Threat t: entrypoints){
-			System.out.println(t.getName());
-			checkAssignment(t,filename, jsonObject);
-			
+			System.out.println("Var - " + t.getName());
+			array_aux = checkAssignment(t,filename, jsonObject);
+			threats.addAll(array_aux);
 		}
 		
-		System.out.println(threats.size());
-		
 		for(Threat t: threats){
-			System.out.println(t.getName());
 			checkVulnerability(t,filename, jsonObject);
 			checkSink(t, filename, jsonObject);
 			
 		}
-		
-		//TODO check if variable is used in sink
-			//if it is, check if it's sanitized
-				//if not, print vulnerability
-		
 		System.out.println("Analysis done");
 	}
 
 	private static void checkVulnerability(Threat t,String filename, JSONObject jsonObject) {
-		String name, kind, kindtmp, nametmp; 
+		String name, kind; 
         JSONArray children = (JSONArray) jsonObject.get("children");
         
         Iterator<JSONObject> iterator = children.iterator();
@@ -80,7 +75,7 @@ public class Analyser{
         	name = (String) jsonObject.get("kind");
         	JSONObject jsobj, jsobj2;
         	
-        	//check if the threat t was assigned to any other variable, assign can also be a sanitization
+        	//check if the threat t was assigned to any other variable
         	if(name.equals("assign")){
         		
         		jsobj = (JSONObject) jsonObject.get("left");
@@ -101,42 +96,22 @@ public class Analyser{
 	        				if(p.getValidations().contains(jsobj2.get("name"))){
 	        					t.setSanitizer((String)jsobj2.get("name"));
 	        					t.setSanitized();
-	        					System.out.println("1");
 	        					break;
 	        				}
 	        			}
 	        			
 	        		}
         		}
-	        	        	
-        		//assignment to another variable
-//        		if(kind.equals("encapsed")){
-//        			JSONArray values = (JSONArray) jsobj.get("value");
-//        			Iterator<JSONObject> iterator2 = values.iterator();
-//        			while(iterator2.hasNext()){
-//        				
-//        				jsobj2=iterator2.next();	
-//        				
-//        				if(jsobj2.containsKey("kind") && jsobj2.containsKey("name")){	
-//	        				kindtmp = (String) jsobj2.get("kind");
-//	        				nametmp = (String) jsobj2.get("name");
-//	        				if(kindtmp.equals("variable") && nametmp.equals(t.getName())){
-//	        					//get left side
-//	        					jsobj2 = (JSONObject) jsonObject.get("left");				
-//	        					Threat tmp = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
-//	        					threats.add(tmp);
-//	        					System.out.println("it gets here");
-//	        				}
-//        				}				
-//        			}
-//        		}
         		    		
         	}
         	
         }
 	}
 
-	private static void checkAssignment(Threat t,String filename, JSONObject jsonObject) {
+	private static ArrayList<Threat> checkAssignment(Threat t,String filename, JSONObject jsonObject) {
+		
+		ArrayList<Threat> threatstmp = new ArrayList<Threat>(entrypoints);
+		
 		String name, kind, kindtmp, nametmp; 
         JSONArray children = (JSONArray) jsonObject.get("children");
         
@@ -151,14 +126,15 @@ public class Analyser{
         	if(name.equals("assign")){
         		
         		jsobj = (JSONObject) jsonObject.get("left");
-        		if(jsobj.get("name").equals(t.getName())){
+        		name = (String)jsobj.get("name");
+        		if(name.equals(t.getName())){
         			continue;
         		}
         		
         		jsobj = (JSONObject) jsonObject.get("right");       		
         		kind = (String) jsobj.get("kind");
         		
-        		//check if the threat t is sanitized 
+        		//check if the threat t is sanitized before it's assigned to another variable
 	        	if(kind.equals("call")){
 	        		
 	        		if(jsobj.containsKey("what") ){
@@ -168,12 +144,36 @@ public class Analyser{
 	        				if(p.getValidations().contains(jsobj2.get("name"))){
 	        					t.setSanitizer((String)jsobj2.get("name"));
 	        					t.setSanitized();
+	        					
+	                			Threat tmp2 = new Threat(name, t.getType(),t.isSanitized(), false);
+	        					
+	                			threatstmp.add(tmp2);
 	        					break;
 	        				}
 	        			}
 	        			
 	        		}
         		}
+	        	if(kind.equals("bin")){	
+	        		
+	        		jsobj2 = (JSONObject) jsobj.get("right");
+        			Threat tmp = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
+  
+	        		if(threatstmp.contains(tmp)){
+	        			tmp.setName(name);
+    					threatstmp.add(tmp);
+	        		}
+	        		
+	        		jsobj2 = (JSONObject) jsobj.get("left");
+        			Threat tmp2 = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
+        			
+	        		if(threatstmp.contains(tmp2)){
+	        			tmp2.setName(name);
+    					threatstmp.add(tmp2);
+	        		}
+	        		
+	        		
+	        	}
 	        	        	
         		//assignment to another variable
         		if(kind.equals("encapsed")){
@@ -186,11 +186,18 @@ public class Analyser{
         				if(jsobj2.containsKey("kind") && jsobj2.containsKey("name")){	
 	        				kindtmp = (String) jsobj2.get("kind");
 	        				nametmp = (String) jsobj2.get("name");
-	        				if(kindtmp.equals("variable") && nametmp.equals(t.getName())){
+	        				
+        					Threat tmp = new Threat(nametmp, t.getType(),t.isSanitized(), false);
+
+	        				
+	        				if(kindtmp.equals("variable") && threatstmp.contains(tmp)){
 	        					//get left side
 	        					jsobj2 = (JSONObject) jsonObject.get("left");				
-	        					Threat tmp = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
-	        					threats.add(tmp);
+	        					Threat tmp1 = new Threat((String)jsobj2.get("name"), t.getType(),t.isSanitized(), false);
+	        					if(!threatstmp.contains(tmp1)){
+	        						threatstmp.add(tmp1);
+	        					}
+	        					
 	        				}
         				}				
         			}
@@ -199,6 +206,7 @@ public class Analyser{
         	}
         	
         }
+		return threatstmp;
 	}
 	
 	
@@ -249,47 +257,54 @@ public class Analyser{
 		while(iterator.hasNext()){
 			jsonObject = iterator.next();
 			String name = (String) jsonObject.get("kind");
-			
+			JSONObject jsobj = (JSONObject) jsonObject.get("right");
 			if(name.equals("assign")){
-				
+
 				//check right for call functions
-				JSONObject jsobj = (JSONObject) jsonObject.get("right");
-				name = (String) jsobj.get("kind");
-				if(name.equals("call")){
-					JSONObject jsobj2 = (JSONObject) jsobj.get("what");
-					if((jsobj2).containsKey("name")){
-						//check if threat is in list of sinks of patterns
-						for(Pattern p : patterns){
-							
-							if(p.getSinks().contains(jsobj2.get("name"))){
-								// check if threat is an argument of sink
-								JSONArray arguments = (JSONArray) jsobj.get("arguments");
-								for(Object o : arguments){
-									JSONObject arg = (JSONObject) o;
-									String nameArg = (String) arg.get("name");
-									
-									if(nameArg.equals(t.getName())){
-										
-										if(!t.isSanitized()){
-											System.out.println("This slice is vulnerable to: " + t.getType());
-										}else{
-											System.out.println("This slice is not vulnerable");
-											System.out.println("The following fucntion sanitizes data" + t.getSanitizer());
-										}
-										
-									}
-								}
-							}
-						}
-					}
-					
-					
-				}
 				
+				name = (String) jsobj.get("kind");
+				if(name.equals("call") && jsobj.containsKey("what")){
+					processCall(t, jsobj);
+				}	
+			}else if(name.equals("call") && jsonObject.containsKey("what")){
+				processCall(t, jsonObject);
 			}
 			
 			
 		}
+		
+	}
+	
+	private static void processCall(Threat t, JSONObject jsonObject){
+		JSONObject jsobj = (JSONObject) jsonObject.get("what");
+		if((jsobj).containsKey("name")){
+			//check if threat is in list of sinks of patterns
+			for(Pattern p : patterns){
+				
+				if(p.getSinks().contains(jsobj.get("name"))){
+					// check if threat is an argument of sink
+					JSONArray arguments = (JSONArray) jsonObject.get("arguments");
+					
+					for(Object o : arguments){
+						JSONObject arg = (JSONObject) o;
+						String nameArg = (String) arg.get("name");
+						
+						if(nameArg.equals(t.getName())){
+							
+							if(!t.isSanitized()){
+								System.out.println("This slice is vulnerable to: " + t.getType());
+								break;
+							}else{
+								System.out.println("This slice is not vulnerable");
+								System.out.println("The following function sanitizes data: " + t.getSanitizer());
+								break;
+							}
+							
+						}
+					}
+				}
+			}
+		}	
 		
 	}
 	
